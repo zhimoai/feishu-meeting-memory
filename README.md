@@ -1,10 +1,8 @@
-# 飞书录音会议知识提取 Skill
+# 飞书会议知识提取（Codex Skill）
 
 `feishu-meeting-memory` 是一个面向 Codex 的只读 Skill，用个人飞书 OAuth 身份查找录音豆生成的妙记、智能纪要、文字记录和关联云文档，并提取会议结论、明确决定、行动项与带时间戳的原话。
 
-最终使用者不需要安装 Python、Node.js、Go 或飞书 CLI。仓库已包含 Windows、macOS 和 Linux 的 64 位独立程序。
-
-> 当前为测试版。安装代码可以通过公共 GitHub 仓库完成，但每位使用者仍需填写自己的飞书应用信息，并使用自己的飞书账号授权。不要共用其他人的 user access token 或 refresh token。
+运行 Skill 不需要安装 Python、Node.js、Go 或飞书 CLI。仓库包含适用于 Windows、macOS 和 Linux 的 64 位独立程序。每位使用者通过自己的飞书账号完成 OAuth，数据可见范围与该账号在飞书中的原有权限一致。
 
 ## 能做什么
 
@@ -60,7 +58,7 @@ Codex 会把完整 Skill 安装到用户级 Skill 目录。若安装后没有立
 
 ## 准备飞书应用
 
-每位使用者需要一个能够发起个人 OAuth 的已发布飞书应用。完整使用妙记接口时，当前建议使用企业自建应用，并确认实际使用者位于应用可用范围。
+每位使用者需要一个能够发起个人 OAuth 的已发布飞书应用。完整的妙记 API 能力依赖企业自建应用，并要求实际使用者位于应用可用范围。
 
 ### 第 1 步：进入开发者后台
 
@@ -76,15 +74,15 @@ Codex 会把完整 Skill 安装到用户级 Skill 目录。若安装后没有立
 
 1. 复制 `App ID`，通常以 `cli_` 开头。
 2. 点击显示并复制 `App Secret`。
-3. 暂时保存在密码管理器中，不要截图、发群或写进 GitHub。
+3. 将凭据保存在密码管理器中，不得写入截图、群聊或 GitHub。
 
 这两个值稍后写入 Skill 根目录的 `config.json`。App ID 可以公开识别应用，App Secret 必须保密。
 
 ### 第 3 步：开通只读权限
 
-在左侧点击“权限管理”，逐项搜索并开通[完整部署权限清单](references/deployment-permissions.md)中的权限。至少要包含云文档读取、妙记搜索与读取、原始转写稿和 `offline_access`。
+在左侧点击“权限管理”，逐项搜索并开通[完整部署权限清单](references/deployment-permissions.md)中的权限，包括云文档读取、妙记搜索与读取、原始转写稿和 `offline_access`。
 
-可以先在 Skill 目录运行下面的命令，查看当前程序要求的准确 scope：
+可在 Skill 目录运行以下命令，查看程序要求的准确 scope：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 permissions
@@ -96,7 +94,7 @@ Codex 会把完整 Skill 安装到用户级 Skill 目录。若安装后没有立
 space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.search:read minutes:minutes.basic:read minutes:minutes.artifacts:read minutes:minutes.transcript:export vc:note:read wiki:node:retrieve offline_access
 ```
 
-不要为了省事增加云文档写入、消息发送等无关权限。若后台显示的中文名称与本文不同，以后台搜索到的 scope 和 API 报错提示为准。
+权限配置应遵循最小权限原则，不需要开通云文档写入、消息发送等无关能力。若后台显示的中文名称与本文不同，以后台搜索到的 scope 和 API 报错提示为准。
 
 ### 第 4 步：添加 OAuth 回调地址
 
@@ -116,11 +114,11 @@ http://127.0.0.1:8080/callback
 4. 提交并发布；如果组织要求管理员审批，等待管理员通过。
 5. 回到应用首页，确认看到“当前修改均已发布”后再进行 OAuth。
 
-以后新增权限，需要再次创建版本并发布；已经授权过的用户还必须重新运行 `oauth-login --full`。飞书访问凭证的身份区别可参考[官方访问凭证说明](https://open.feishu.cn/document/server-docs/api-call-guide/calling-process/get-access-token)。
+新增权限后，需要再次创建并发布应用版本；已经授权的用户还需重新运行 `oauth-login --full`。飞书访问凭证的身份区别可参考[官方访问凭证说明](https://open.feishu.cn/document/server-docs/api-call-guide/calling-process/get-access-token)。
 
 ## 首次配置与授权
 
-只做三件事：复制配置示例、填写两项应用凭据、登录飞书授权。
+首次配置包括三个步骤：准备配置文件、完成飞书授权、检查运行状态。
 
 ### 1. 准备配置文件
 
@@ -167,17 +165,17 @@ macOS/Linux：
 sh ./scripts/feishu-meetings.sh doctor
 ```
 
-看到 `status: ok` 即表示配置、授权和自动刷新能力正常。
+看到顶层 `"ok": true`，并确认 `token_source` 为 `user_access_token`、`refresh_token_saved` 为 `true`，即表示配置与授权正常。
 
 Skill 根目录中现在有：
 
 ```text
 feishu-meeting-memory/
 ├── config.example.json    # 可以公开的填写示例
-└── config.json            # 当前电脑的真实配置，不可分享或提交
+└── config.json            # 本机敏感配置，不可分享或提交
 ```
 
-`config.json` 已在 `.gitignore` 中排除，但它会保存 App Secret、user access token 和 refresh token。不要把已经配置过的整个 Skill 文件夹打包发给别人；其他用户应从干净的 GitHub 仓库安装，然后填写自己的配置。
+`config.json` 已在 `.gitignore` 中排除，但它会保存 App Secret、user access token 和 refresh token。分发时应使用未配置的仓库副本；每位使用者分别创建自己的 `config.json` 并完成 OAuth。
 
 配置文件其他字段通常不需要修改：
 
@@ -205,7 +203,7 @@ Windows 示例：
 & .\scripts\feishu-meetings.ps1 doctor --probe
 ```
 
-如果有一条无敏感内容的测试妙记和智能纪要，可以进一步验证：
+如有无敏感内容的测试妙记和智能纪要，可进一步验证详情、AI 产物、逐字稿和文档正文：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 doctor --probe `
@@ -214,7 +212,7 @@ Windows 示例：
   --doc '<智能纪要 URL>'
 ```
 
-完整通过时，`doctor` 应显示个人授权、refresh token 和部署权限完整，六项在线探测均为成功。
+验收标准是 `doctor` 显示个人授权、refresh token 和部署权限完整，且六项在线探测均为成功。
 
 ## 在 Codex 中使用
 
@@ -246,7 +244,7 @@ $feishu-meeting-memory 把最近十场项目会议整理成进展、风险和下
 
 运行启动脚本并加 `--help` 可查看全部命令。更详细的能力边界见[飞书能力说明](references/feishu-capabilities.md)。
 
-## 当前限制
+## 已知限制
 
 - 个人飞书账号不能脱离飞书应用直接调用 OpenAPI。
 - 部分妙记接口可能只支持特定应用类型；没有妙记 API 能力时，以个人云盘中的智能纪要和文字记录 Docx 为主链路。
@@ -284,7 +282,7 @@ feishu-meeting-memory/
 ├── bin/                     # 六个平台独立程序
 ├── cmd/feishu-meetings/     # Go 源码和测试
 ├── references/              # 安装、权限、能力和提取规则
-└── scripts/                 # 配置、启动、构建脚本
+└── scripts/                 # 启动与构建脚本
 ```
 
 ## 文档

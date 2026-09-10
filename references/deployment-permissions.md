@@ -41,7 +41,7 @@ space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.
 
 1. 在“权限管理”开通上述完整个人只读权限。
 2. 在“安全设置 → 重定向 URL”添加 `http://127.0.0.1:8080/callback`。
-3. 把试用人员加入应用可用范围。
+3. 把授权用户加入应用可用范围。
 4. 创建并发布新版本，完成管理员审批。
 5. 每位用户运行 `oauth-login --full`，使用自己的飞书账号授权。
 
@@ -49,10 +49,10 @@ space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.
 
 ## 应用类型边界
 
-- 当前完整流程已在企业自建应用与个人 `user_access_token` 下实测通过。
-- 部分妙记接口的官方页面标注仅支持企业自建应用。若后续改为商店应用，应逐接口重新验证，不能直接假设妙记搜索、AI 产物和逐字稿全部可用。
+- 支持基线为企业自建应用与个人 `user_access_token`；发布前可按下方部署验收流程验证实际租户配置。
+- 部分妙记接口的官方页面标注仅支持企业自建应用。采用商店应用时必须逐接口验证，不能默认妙记搜索、AI 产物和逐字稿全部可用。
 - 不使用妙记接口时，个人云盘 Docx 仍可作为主链路：`meetings` 发现资料，`doc` 读取智能纪要和文字记录。
-- 个人账号不能脱离应用直接取得 OpenAPI token；正式多人分发应由 OAuth 网关保管 App Secret。
+- 个人账号不能脱离应用直接取得 OpenAPI token；公共或大规模分发应由 OAuth 网关保管 App Secret。
 
 ## 部署验收
 
@@ -96,4 +96,3 @@ space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.
 | 2091005 或 403 | 当前身份没有单条妙记/文档资源权限 | 由资源所有者通过飞书正常分享流程授权 |
 
 官方参考：[获取访问凭证](https://open.larkoffice.com/document/server-docs/api-call-guide/calling-process/get-access-token)、[获取妙记 AI 产物](https://open.larkoffice.com/document/uAjLw4CM/ukTMukTMukTM/minutes-v1/minute/artifacts)、[获取新版云文档纯文本](https://open.larkoffice.com/document/server-docs/docs/docs/docx-v1/document/raw_content)。
-

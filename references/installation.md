@@ -14,7 +14,7 @@
 
 使用者安装 Skill 后，用自己的飞书账号完成浏览器授权。每个人获得独立的用户令牌，只能访问本人原本有权查看的会议资料。
 
-个人账号不能脱离应用直接调用飞书 OpenAPI。当前本机试点需要一个已发布的飞书应用；正式大范围分发时，应使用 OAuth 网关保管 App Secret，不能把 Secret 广泛发到个人电脑。
+个人账号不能脱离应用直接调用飞书 OpenAPI，因此需要一个已发布的飞书应用。公共或大规模分发应使用 OAuth 网关保管 App Secret，避免将 Secret 分发到终端设备。
 
 ## 二、管理员准备飞书应用
 
@@ -25,7 +25,7 @@
 3. 点击“创建企业自建应用”。如果页面没有这个按钮，需要联系所在飞书组织的管理员开通开发权限。
 4. 填写应用名称，例如“飞书会议知识提取”，再填写描述、上传图标并确认创建。
 
-当前完整妙记流程按企业自建应用设计。只读取云文档时可以继续评估商店应用，但必须逐个确认目标接口是否支持对应应用类型。官方说明：[企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)。
+完整妙记流程按企业自建应用设计。商店应用的接口支持范围不同，采用前必须逐项确认目标接口兼容性。官方说明：[企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)。
 
 ### 2. 获取 App ID 和 App Secret
 
@@ -33,7 +33,7 @@
 
 1. 找到 `App ID`，它通常以 `cli_` 开头，复制备用。
 2. 找到 `App Secret`，点击显示后复制备用。
-3. 不要截图，不要发到微信群、飞书群、Issue 或 GitHub。
+3. 将 App Secret 保存在密码管理器或密钥管理系统中，不得写入截图、群聊、Issue 或 GitHub。
 
 App ID 用来识别应用；App Secret 相当于应用密码。两者稍后填入 Skill 根目录的 `config.json`。
 
@@ -84,7 +84,7 @@ http://127.0.0.1:8080/callback
 
 ### 5. 添加测试人员
 
-打开左侧“测试企业和人员”，把准备跑通流程的飞书账号加入测试人员。首次联调建议先只加自己，确认没有读取到超出预期的数据后再扩大范围。
+打开左侧“测试企业和人员”，把需要授权的飞书账号加入测试人员。测试范围应遵循最小权限原则，验证访问边界后再逐步扩大。
 
 ### 6. 创建版本并发布
 
@@ -98,7 +98,7 @@ http://127.0.0.1:8080/callback
 
 ### 7. 准备本机配置
 
-本机试点需要刚才复制的 App ID 和 App Secret。只把它们写入本机 Skill 根目录的 `config.json`，不要写进 README、示例文件、群聊、文档、Skill 包或源码。Secret 一旦出现在截图或聊天中，应在联调结束后重置。
+将 App ID 和 App Secret 写入本机 Skill 根目录的 `config.json`。不得将真实凭据写入 README、示例文件、群聊、文档、Skill 包或源码；Secret 一旦泄露，应立即在飞书开放平台重置。
 
 官方参考：
 
@@ -234,7 +234,7 @@ sh ./scripts/feishu-meetings.sh oauth-login --full
 ### 3. 查询今天会议
 
 ```powershell
-& .\scripts\feishu-meetings.ps1 meetings --date 2026-09-09
+& .\scripts\feishu-meetings.ps1 meetings --date '<YYYY-MM-DD>'
 ```
 
 把日期替换为当天日期。
@@ -294,7 +294,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 | 飞书界面能看到，API 读取不到 | scope 与单条文档 ACL 是两层权限；确认授权账号正确，并确认该账号对文档有访问权。 |
 | 刚结束录音但列表中没有 | 妙记、智能纪要或文字记录仍在生成；稍后重试。不要把空结果直接解释为没有开会。 |
 | 8080 端口被占用 | 关闭占用程序，或者在后台新增另一个完整回调地址，再用 `oauth-login --redirect-uri <地址>`。 |
-| Windows 阻止运行程序 | 当前独立程序未做商业代码签名；企业电脑应由内部构建/签名流程处理。不要从未知来源下载替代程序。 |
+| Windows 阻止运行程序 | 预编译程序未做商业代码签名；企业电脑应由内部构建/签名流程处理。不要从未知来源下载替代程序。 |
 | 电脑没有 Python | 不受影响；最终用户只运行 Skill 自带的独立程序和系统 PowerShell/shell。 |
 
 ## 九、安全检查
@@ -305,7 +305,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 - 不在聊天、工单或截图中展示 App Secret 和 token。
 - App Secret 泄露后立即在飞书开放平台重置。
 - 用户离职、设备丢失或授权不再需要时，在飞书中撤销应用授权，并删除该设备上的本地配置。
-- 正式多人分发前增加 OAuth 网关，让终端不再保存 App Secret。
+- 公共或大规模分发应使用 OAuth 网关，使终端不再保存 App Secret。
 
 ## 十、验收清单
 

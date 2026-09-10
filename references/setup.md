@@ -4,7 +4,7 @@
 
 ## 1. 授权模型：一个应用，每人登录自己的账号
 
-个人账号不能脱离应用直接调用飞书 OpenAPI。当前本机试点使用一个已经创建并发布的飞书应用发起 OAuth；每位使用者在自己的电脑上登录自己的飞书账号并授权，程序保存该用户自己的短期 `user_access_token` 和 `refresh_token`。App ID 只标识应用，不能代替用户身份。
+个人账号不能脱离应用直接调用飞书 OpenAPI。系统使用已创建并发布的飞书应用发起 OAuth；每位使用者在自己的设备上登录飞书账号并授权，程序保存该用户自己的短期 `user_access_token` 和 `refresh_token`。App ID 只标识应用，不能代替用户身份。
 
 完整链路：
 
@@ -17,13 +17,13 @@
 
 不同用户不得复制或共用 token。scope 只授予接口能力，文档与妙记 ACL 仍以当前登录用户在飞书中的实际权限为准。
 
-当前截图中的 App Secret 已经出现在聊天/截图中，试点跑通后应在飞书开放平台重置。新 Secret 只放在 Skill 根目录中被 Git 忽略的 `config.json`，或正式部署时放入服务端密钥管理器；不写进源码、Git、Issue 或聊天记录。
+App Secret 只应保存在 Skill 根目录中被 Git 忽略的 `config.json`，或多人部署时保存在服务端密钥管理器中；不得写入源码、Git、Issue、日志或聊天记录。已经泄露的 Secret 必须在飞书开放平台重置。
 
 ## 2. 安装者生成配置文件
 
 真实配置固定放在当前 Skill 根目录：`<skill-dir>/config.json`。启动脚本会自动把这个路径传给独立程序，OAuth 获取的用户令牌也写回同一个文件。
 
-Windows 本机试点在 Skill 目录运行：
+Windows：
 
 ```powershell
 Copy-Item .\config.example.json .\config.json
@@ -47,21 +47,21 @@ chmod 600 ./config.json
 
 格式模板见 Skill 根目录的 [config.example.json](../config.example.json)。不要直接在模板中填写真实密钥。
 
-开发者仍可用 `FEISHU_CONFIG_FILE` 临时指向另一份 JSON，环境变量也继续优先于配置文件；普通使用者不需要设置这些覆盖项。
+高级配置可通过 `FEISHU_CONFIG_FILE` 指向另一份 JSON；环境变量的优先级高于配置文件。普通使用者无需设置这些覆盖项。
 
-## 3. 本机试点与正式分发
+## 3. 部署模式
 
-### 当前本机试点
+### 个人本地使用
 
-继续使用现有企业自建应用即可。配置中保存 App ID/Secret，每次 OAuth 登录的是实际使用录音豆的个人账号。这样能同时验证个人云盘、妙记搜索以及文档正文；不需要复制当前用户的 token 给其他电脑。
+适合个人或单台受控设备。App ID/Secret 和该用户的 OAuth 令牌保存在本地 `config.json`；个人云盘、妙记和文档访问均使用该用户身份。
 
-### 同一企业内的小范围试用
+### 企业内部部署
 
-可以让应用管理员把试用人员加入应用可用范围，再让每个人各自运行 `oauth-login`。但 App Secret 不适合广泛分发，只能在受控公司电脑上短期试用。
+应用管理员将使用者加入应用可用范围，每位使用者分别运行 `oauth-login`。如需在终端保存 App Secret，应将部署范围限制在受控设备，并配合操作系统权限、磁盘加密和凭据轮换策略。
 
-### 正式多人分发
+### 公共或大规模分发
 
-应增加一个 OAuth 网关，由服务端保管 App Secret 并完成授权码交换与令牌刷新；终端不保存 App Secret，也不拿别人的 token。若改为商店应用，仍需逐项确认目标接口支持商店应用。妙记部分接口标注仅支持企业自建应用，因此无企业应用时应以个人云盘 Docx 流程为主，不能承诺全部妙记产物 API 可用。
+应使用 OAuth 网关，由服务端保管 App Secret 并完成授权码交换与令牌刷新，使终端不保存 App Secret。商店应用需要逐项确认目标接口兼容性；部分妙记接口仅支持企业自建应用，因此无法使用企业应用时应以个人云盘 Docx 流程为主。
 
 完全没有任何飞书应用时，不能使用官方 OpenAPI，只能返回链接让用户在已登录浏览器中查看，或使用易受页面变化影响的浏览器自动化。
 
@@ -69,7 +69,7 @@ chmod 600 ./config.json
 
 技能包内已包含以下静态程序：Windows x64/ARM64、macOS Intel/Apple Silicon、Linux x64/ARM64。Windows 启动器会自动选择匹配的 `.exe`，macOS/Linux 启动器会选择匹配的 Mach-O/ELF 文件并在需要时补充执行权限。
 
-当前本地测试阶段把完整目录放到用户级 `$HOME/.agents/skills/feishu-meeting-memory`，或项目级 `.agents/skills/feishu-meeting-memory`。具体步骤见 [installation.md](installation.md)。正式对外分发应在功能验收后打包为插件；本阶段不要使用旧的 `dist` 压缩包。
+完整目录可安装到用户级 `$HOME/.agents/skills/feishu-meeting-memory`，或项目级 `.agents/skills/feishu-meeting-memory`。具体步骤见 [installation.md](installation.md)。
 
 发布或复制技能时必须保留 `bin/`、`scripts/feishu-meetings.ps1` 和 `scripts/feishu-meetings.sh`。不要只复制 `SKILL.md`。可用 `bin/SHA256SUMS` 检查二进制完整性；源码位于 `cmd/feishu-meetings/`，重建脚本位于 `scripts/build-binaries.ps1`，只有开发者重建时才需要 Go。
 
@@ -111,7 +111,7 @@ chmod 600 ./config.json
 
 | 现象 | 判断与处理 |
 |---|---|
-| 认证失败 | 检查 App ID、新 Secret、应用版本是否已发布；不要复用截图里的 Secret。 |
+| 认证失败 | 检查 App ID、App Secret 和应用版本发布状态；若 Secret 曾经泄露，应先重置再重新配置。 |
 | 缺少 scope | 在权限管理中增加报错明确指出的只读 scope，重新发布并管理员批准。 |
 | 有 scope 但某条妙记 2091005/403 | 这是资源 ACL，不是接口权限；让所有者以正常飞书分享流程授权。 |
 | 只有 App ID/Secret，仍不能查询最近会议 | 应用凭据不是个人身份；运行 `oauth-login`，由当前使用者登录自己的飞书账号。 |

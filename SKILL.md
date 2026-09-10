@@ -45,7 +45,7 @@ sh '<skill-dir>/scripts/feishu-meetings.sh' drive-meetings
 sh '<skill-dir>/scripts/feishu-meetings.sh' evidence <minute_token_or_url>
 ```
 
-后续命令都复用当前平台的同一启动器：`doc-search ...`、`evidence ...`、`show ... --artifacts transcript`、`note <note_id>`、`note-transcript <note_id>`、`doc <url_or_token>`、`meeting <meeting_id>`。不要尝试调用已不存在的 Python 脚本。
+后续命令都复用当前平台的同一启动器：`doc-search ...`、`evidence ...`、`show ... --artifacts transcript`、`note <note_id>`、`note-transcript <note_id>`、`doc <url_or_token>`、`meeting <meeting_id>`。
 
 若操作系统或 CPU 不受支持，明确报告当前平台；不要自动下载可执行文件。预编译文件的 SHA-256 在 `bin/SHA256SUMS`，可审计源码在 `cmd/feishu-meetings/`。
 
