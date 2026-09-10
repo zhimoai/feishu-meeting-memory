@@ -62,26 +62,61 @@ Codex 会把完整 Skill 安装到用户级 Skill 目录。若安装后没有立
 
 每位使用者需要一个能够发起个人 OAuth 的已发布飞书应用。完整使用妙记接口时，当前建议使用企业自建应用，并确认实际使用者位于应用可用范围。
 
-在飞书开放平台完成：
+### 第 1 步：进入开发者后台
 
-1. 创建或选择应用。
-2. 按[完整部署权限清单](references/deployment-permissions.md)开通只读权限。
-3. 在“安全设置 → 重定向 URL”添加：
+1. 打开[飞书开放平台开发者后台](https://open.feishu.cn/app)，使用准备读取会议的飞书账号登录。
+2. 点击“创建企业自建应用”。如果看不到这个按钮，说明当前账号可能没有开发应用权限，需要联系所在飞书组织的管理员。
+3. 填写应用名称，例如“飞书会议知识提取”，上传图标并填写简单描述，然后创建。
 
-   ```text
-   http://127.0.0.1:8080/callback
-   ```
+官方入门资料：[企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)。
 
-4. 创建并发布应用版本，完成管理员审批。
-5. 保存 App ID 和 App Secret，后续只输入到本机配置脚本中。
+### 第 2 步：复制 App ID 和 App Secret
 
-默认完整授权使用以下 scope：
+进入刚创建的应用，在左侧打开“凭证与基础信息”：
+
+1. 复制 `App ID`，通常以 `cli_` 开头。
+2. 点击显示并复制 `App Secret`。
+3. 暂时保存在密码管理器中，不要截图、发群或写进 GitHub。
+
+这两个值稍后写入 Skill 根目录的 `config.json`。App ID 可以公开识别应用，App Secret 必须保密。
+
+### 第 3 步：开通只读权限
+
+在左侧点击“权限管理”，逐项搜索并开通[完整部署权限清单](references/deployment-permissions.md)中的权限。至少要包含云文档读取、妙记搜索与读取、原始转写稿和 `offline_access`。
+
+可以先在 Skill 目录运行下面的命令，查看当前程序要求的准确 scope：
+
+```powershell
+& .\scripts\feishu-meetings.ps1 permissions
+```
+
+默认完整授权使用：
 
 ```text
 space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.search:read minutes:minutes.basic:read minutes:minutes.artifacts:read minutes:minutes.transcript:export vc:note:read wiki:node:retrieve offline_access
 ```
 
-可直接运行 `permissions` 命令查看当前版本程序内置的权限清单。飞书后台的权限名称、应用类型支持范围及常见错误码以[部署权限文档](references/deployment-permissions.md)为准。
+不要为了省事增加云文档写入、消息发送等无关权限。若后台显示的中文名称与本文不同，以后台搜索到的 scope 和 API 报错提示为准。
+
+### 第 4 步：添加 OAuth 回调地址
+
+打开左侧“安全设置”，停留在“重定向 URL”页签，添加下面的完整地址：
+
+```text
+http://127.0.0.1:8080/callback
+```
+
+协议、IP、端口和路径必须一字不差；`localhost`、缺少 `/callback` 或换成其他端口都不是同一个地址。
+
+### 第 5 步：添加测试人员并发布
+
+1. 打开“测试企业和人员”，把准备测试的飞书账号加入测试范围。
+2. 打开“版本管理与发布”，点击“创建版本”。
+3. 填写版本号和更新说明，确认应用可用范围包含实际使用者。
+4. 提交并发布；如果组织要求管理员审批，等待管理员通过。
+5. 回到应用首页，确认看到“当前修改均已发布”后再进行 OAuth。
+
+以后新增权限，需要再次创建版本并发布；已经授权过的用户还必须重新运行 `oauth-login --full`。飞书访问凭证的身份区别可参考[官方访问凭证说明](https://open.feishu.cn/document/server-docs/api-call-guide/calling-process/get-access-token)。
 
 ## 首次配置与授权
 
@@ -105,11 +140,46 @@ sh ./scripts/feishu-meetings.sh doctor
 
 配置脚本会询问 App ID 和 App Secret，Secret 输入不会显示。OAuth 命令会打开浏览器，使用者应登录录音设备绑定的飞书账号并同意授权。
 
-配置和令牌保存在当前用户的系统配置目录，不写进 Skill 或 Git 仓库：
+配置脚本会在 Skill 根目录创建：
 
-- Windows：`%APPDATA%\feishu-meeting-memory\config.json`
-- macOS：`~/Library/Application Support/feishu-meeting-memory/config.json`
-- Linux：`${XDG_CONFIG_HOME:-~/.config}/feishu-meeting-memory/config.json`
+```text
+feishu-meeting-memory/
+├── config.example.json    # 可以公开的填写示例
+└── config.json            # 当前电脑的真实配置，不可分享或提交
+```
+
+`config.json` 已在 `.gitignore` 中排除，但它会保存 App Secret、user access token 和 refresh token。不要把已经配置过的整个 Skill 文件夹打包发给别人；其他用户应从干净的 GitHub 仓库安装，然后填写自己的配置。
+
+### 手工使用配置示例
+
+不想运行配置脚本时，可以复制根目录的 [`config.example.json`](config.example.json)：
+
+Windows：
+
+```powershell
+Copy-Item .\config.example.json .\config.json
+notepad .\config.json
+```
+
+macOS/Linux：
+
+```bash
+cp ./config.example.json ./config.json
+chmod 600 ./config.json
+```
+
+只需要先替换 `app_id` 和 `app_secret`。JSON 必须使用英文双引号，不能写注释，最后一个字段后面不能多逗号。其他字段含义如下：
+
+| 字段 | 是否必填 | 说明 |
+|---|---|---|
+| `app_id` | 是 | “凭证与基础信息”页面中的 App ID |
+| `app_secret` | 是 | 同一页面中的 App Secret |
+| `oauth_redirect_uri` | 是 | 必须与后台重定向 URL 完全一致 |
+| `oauth_scope` | 是 | 默认完整只读权限，通常无需修改 |
+| `api_base` | 是 | 中国版飞书保持 `https://open.feishu.cn` |
+| `http_timeout_seconds` | 否 | 请求超时秒数，默认 30 |
+
+不要手工填写 `user_access_token` 或 `refresh_token`。第一次执行 `oauth-login --full` 后，程序会自动把这些字段写回 `config.json`。
 
 完整授权包含 `offline_access`。保存 refresh token 后，程序会在 access token 临近过期时自动刷新；只有授权失效、用户更换账号或应用权限发生变化时才需要重新登录。
 
@@ -197,6 +267,8 @@ go vet ./...
 ```text
 feishu-meeting-memory/
 ├── SKILL.md                 # Codex 工作流入口
+├── config.example.json      # 可公开的配置示例
+├── config.json              # 本机敏感配置，已被 Git 忽略
 ├── agents/openai.yaml       # Skill 展示信息
 ├── bin/                     # 六个平台独立程序
 ├── cmd/feishu-meetings/     # Go 源码和测试

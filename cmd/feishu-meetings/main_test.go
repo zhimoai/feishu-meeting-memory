@@ -68,6 +68,21 @@ func TestConfigFileLoadsAndEnvironmentOverrides(t *testing.T) {
 	}
 }
 
+func TestSkillConfigPathUsesSkillRoot(t *testing.T) {
+	root := t.TempDir()
+	executable := filepath.Join(root, "bin", "windows-amd64", "feishu-meetings.exe")
+	path, ok := skillConfigPath(executable)
+	if !ok {
+		t.Fatal("expected packaged executable layout to be recognized")
+	}
+	if path != filepath.Join(root, "config.json") {
+		t.Fatalf("path=%q", path)
+	}
+	if _, ok := skillConfigPath(filepath.Join(root, "feishu-meetings.exe")); ok {
+		t.Fatal("unexpected skill root inference outside bin/<platform>")
+	}
+}
+
 func TestParseMinuteTokenFromURL(t *testing.T) {
 	token, err := parseMinuteToken("https://team.feishu.cn/minutes/obcnABC123?from=share")
 	if err != nil {

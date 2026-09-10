@@ -50,11 +50,29 @@ type settings struct {
 }
 
 func defaultConfigPath() (string, error) {
-	directory, err := os.UserConfigDir()
-	if err != nil {
-		return "", configurationError("无法确定用户配置目录: %v", err)
+	executable, executableErr := os.Executable()
+	workingDirectory, workingErr := os.Getwd()
+	if executableErr == nil {
+		if resolved, err := filepath.EvalSymlinks(executable); err == nil {
+			executable = resolved
+		}
+		if path, ok := skillConfigPath(executable); ok {
+			return path, nil
+		}
 	}
-	return filepath.Join(directory, "feishu-meeting-memory", "config.json"), nil
+	if workingErr != nil {
+		return "", configurationError("无法确定 Skill 配置文件路径: %v", workingErr)
+	}
+	return filepath.Join(workingDirectory, "config.json"), nil
+}
+
+func skillConfigPath(executable string) (string, bool) {
+	platformDirectory := filepath.Dir(executable)
+	binDirectory := filepath.Dir(platformDirectory)
+	if filepath.Base(binDirectory) != "bin" {
+		return "", false
+	}
+	return filepath.Join(filepath.Dir(binDirectory), "config.json"), true
 }
 
 func configPath() (string, error) {

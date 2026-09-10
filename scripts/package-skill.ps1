@@ -37,6 +37,7 @@ if (Test-Path -LiteralPath $archivePath -PathType Leaf) {
 }
 $inputs = @(
     (Join-Path $projectRoot 'SKILL.md'),
+    (Join-Path $projectRoot 'config.example.json'),
     (Join-Path $projectRoot 'agents'),
     (Join-Path $projectRoot 'references'),
     (Join-Path $projectRoot 'scripts'),

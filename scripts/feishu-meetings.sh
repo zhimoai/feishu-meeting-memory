@@ -2,6 +2,10 @@
 set -eu
 
 skill_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ -z "${FEISHU_CONFIG_FILE:-}" ]; then
+  FEISHU_CONFIG_FILE=$skill_root/config.json
+  export FEISHU_CONFIG_FILE
+fi
 
 case "$(uname -s)" in
   Linux) platform=linux ;;
@@ -25,4 +29,3 @@ if [ ! -x "$binary" ]; then
 fi
 
 exec "$binary" "$@"
-

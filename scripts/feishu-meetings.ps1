@@ -1,6 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
 $skillRoot = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($env:FEISHU_CONFIG_FILE)) {
+    $env:FEISHU_CONFIG_FILE = Join-Path $skillRoot 'config.json'
+}
 $architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
 $architecture = switch ($architecture) {
     'x64' { 'amd64' }
@@ -15,4 +18,3 @@ if (-not (Test-Path -LiteralPath $binary -PathType Leaf)) {
 
 & $binary @args
 exit $LASTEXITCODE
-

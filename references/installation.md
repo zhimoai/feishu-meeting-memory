@@ -18,11 +18,26 @@
 
 ## 二、管理员准备飞书应用
 
-### 1. 创建或选择应用
+### 1. 登录飞书开放平台
 
-当前需要完整使用妙记 API 时，选择企业自建应用。只走云文档流程时可以继续评估商店应用，但要逐项确认目标接口支持该应用类型。
+1. 打开[飞书开放平台开发者后台](https://open.feishu.cn/app)。
+2. 使用准备读取会议资料的飞书账号登录。
+3. 点击“创建企业自建应用”。如果页面没有这个按钮，需要联系所在飞书组织的管理员开通开发权限。
+4. 填写应用名称，例如“飞书会议知识提取”，再填写描述、上传图标并确认创建。
 
-### 2. 开通完整个人只读权限
+当前完整妙记流程按企业自建应用设计。只读取云文档时可以继续评估商店应用，但必须逐个确认目标接口是否支持对应应用类型。官方说明：[企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)。
+
+### 2. 获取 App ID 和 App Secret
+
+创建成功后，进入该应用，在左侧点击“凭证与基础信息”：
+
+1. 找到 `App ID`，它通常以 `cli_` 开头，复制备用。
+2. 找到 `App Secret`，点击显示后复制备用。
+3. 不要截图，不要发到微信群、飞书群、Issue 或 GitHub。
+
+App ID 用来识别应用；App Secret 相当于应用密码。两者稍后填入 Skill 根目录的 `config.json`。
+
+### 3. 开通完整个人只读权限
 
 部署前先查看 [完整部署权限清单](deployment-permissions.md)，也可以在 Skill 目录运行：
 
@@ -30,7 +45,7 @@
 & .\scripts\feishu-meetings.ps1 permissions
 ```
 
-在飞书开放平台进入应用的“权限管理”，开通以下权限：
+在应用左侧点击“权限管理”，点击开通权限，并逐项搜索以下 scope。若后台要求选择“应用身份”或“用户身份”，按后台对该 scope 的可选方式开通；本 Skill 查询个人会议时最终使用用户身份授权。
 
 | 用途 | 权限 |
 |---|---|
@@ -53,26 +68,43 @@
 
 飞书后台若显示旧版同义权限，以后台当前权限名和 API 报错建议为准，不要同时申请不需要的写权限。
 
-### 3. 添加重定向 URL
+权限只决定接口是否可以调用，不会自动赋予某篇会议或文档的访问权。实际读取范围仍等于登录用户在飞书界面中原本可以查看的范围。
 
-进入“安全设置 → 重定向 URL”，添加以下完整地址：
+### 4. 添加重定向 URL
+
+1. 点击左侧“安全设置”。
+2. 选择顶部“重定向 URL”页签。
+3. 在输入框中粘贴下面的完整地址并点击添加：
 
 ```text
 http://127.0.0.1:8080/callback
 ```
 
-协议、IP、端口和路径必须完全一致。不要只填 `127.0.0.1`。
+协议、IP、端口和路径必须完全一致。不要只填 `127.0.0.1`，不要改成 `localhost`，也不要省略 `/callback`。
 
-### 4. 设置可用范围并发布
+### 5. 添加测试人员
 
-1. 把实际试用人员加入应用可用范围。
-2. 创建新版本并发布。
-3. 确认管理员已批准新增权限。
-4. 权限或回调地址有变化时，必须重新发布后再让用户授权。
+打开左侧“测试企业和人员”，把准备跑通流程的飞书账号加入测试人员。首次联调建议先只加自己，确认没有读取到超出预期的数据后再扩大范围。
 
-### 5. 准备试点凭据
+### 6. 创建版本并发布
 
-本机试点需要 App ID 和 App Secret。只通过安全渠道交给受控测试电脑，不要把 Secret 写进群聊、文档、Skill 包或源码。Secret 一旦出现在截图或聊天中，应在联调结束后重置。
+1. 点击左侧“版本管理与发布”。
+2. 点击“创建版本”，填写版本号，例如 `1.0.0`，并填写更新说明。
+3. 确认应用可用范围包含实际测试人员。
+4. 提交并发布。如果组织启用了管理员审核，等待管理员批准。
+5. 回到应用首页，确认顶部显示“当前修改均已发布”。
+
+新增权限或修改回调地址后，都要重新创建并发布版本。已经授权过的用户还必须重新执行 `oauth-login --full`，否则旧令牌中没有新增权限。
+
+### 7. 准备本机配置
+
+本机试点需要刚才复制的 App ID 和 App Secret。只把它们写入本机 Skill 根目录的 `config.json`，不要写进 README、示例文件、群聊、文档、Skill 包或源码。Secret 一旦出现在截图或聊天中，应在联调结束后重置。
+
+官方参考：
+
+- [飞书开放平台开发者后台](https://open.feishu.cn/app)
+- [企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)
+- [访问凭证类型与获取方式](https://open.feishu.cn/document/server-docs/api-call-guide/calling-process/get-access-token)
 
 ## 三、安装 Skill
 
@@ -99,6 +131,7 @@ https://github.com/zhimoai/feishu-meeting-memory
 ```text
 feishu-meeting-memory/
 ├── SKILL.md
+├── config.example.json
 ├── agents/
 ├── bin/
 ├── references/
@@ -140,13 +173,42 @@ Set-ExecutionPolicy -Scope Process Bypass
 sh ./scripts/configure.sh
 ```
 
-配置文件保存在用户自己的系统配置目录，不放在 Skill 中：
+配置脚本会在当前 Skill 根目录生成：
 
-- Windows：`%APPDATA%\feishu-meeting-memory\config.json`
-- macOS：`~/Library/Application Support/feishu-meeting-memory/config.json`
-- Linux：`${XDG_CONFIG_HOME:-~/.config}/feishu-meeting-memory/config.json`
+```text
+<skill-dir>/config.json
+```
 
-不要复制其他用户的配置文件，因为其中可能包含其个人令牌。
+此文件同时保存 App ID、App Secret，以及 OAuth 登录后自动写入的 user access token 和 refresh token。仓库已经通过 `.gitignore` 排除它，但它仍然是敏感文件。
+
+不运行配置脚本时，也可以复制根目录的配置示例：
+
+### Windows 手工配置
+
+```powershell
+Copy-Item .\config.example.json .\config.json
+notepad .\config.json
+```
+
+### macOS/Linux 手工配置
+
+```bash
+cp ./config.example.json ./config.json
+chmod 600 ./config.json
+```
+
+编辑时只需要先替换 `app_id` 和 `app_secret`。保持 `oauth_redirect_uri`、`oauth_scope` 和 `api_base` 的默认值。JSON 文件必须使用英文双引号，不能添加注释或多余逗号。
+
+| 字段 | 填写方式 |
+|---|---|
+| `app_id` | 粘贴“凭证与基础信息”中的 App ID |
+| `app_secret` | 粘贴同一页面中的 App Secret |
+| `oauth_redirect_uri` | 保持 `http://127.0.0.1:8080/callback` |
+| `oauth_scope` | 保持示例中的完整只读 scope |
+| `api_base` | 中国版飞书保持 `https://open.feishu.cn` |
+| `http_timeout_seconds` | 保持 30；网络较慢时再调整 |
+
+不要手工添加 token。完成下一步 OAuth 后，程序会自动写入并自动刷新。不要复制其他用户的 `config.json`，也不要把已经配置过的 Skill 目录整体发给别人。
 
 ## 五、用个人飞书账号授权
 
@@ -265,7 +327,8 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 ## 九、安全检查
 
 - 每个人都使用自己的飞书账号 OAuth，不共享 token。
-- 不把 `%APPDATA%\feishu-meeting-memory\config.json` 发给别人。
+- 不提交或分享 Skill 根目录的 `config.json`。
+- 更新或重新安装 Skill 前，只在可信位置备份自己的 `config.json`，完成后放回 Skill 根目录。
 - 不在聊天、工单或截图中展示 App Secret 和 token。
 - App Secret 泄露后立即在飞书开放平台重置。
 - 用户离职、设备丢失或授权不再需要时，在飞书中撤销应用授权，并删除该设备上的本地配置。

@@ -1,9 +1,13 @@
 param(
     [string]$AppId,
-    [string]$ConfigPath = (Join-Path $env:APPDATA 'feishu-meeting-memory\config.json')
+    [string]$ConfigPath
 )
 
 $ErrorActionPreference = 'Stop'
+$skillRoot = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
+    $ConfigPath = Join-Path $skillRoot 'config.json'
+}
 if ([string]::IsNullOrWhiteSpace($AppId)) {
     $AppId = Read-Host 'Feishu App ID'
 }
@@ -46,7 +50,7 @@ try {
         config_file = $absolutePath
         app_id = $AppId
         secret_printed = $false
-        next_step = 'Run scripts/feishu-meetings.ps1 oauth-login --full and sign in with the current user account'
+        next_step = 'The config is saved in the Skill root. Run scripts/feishu-meetings.ps1 oauth-login --full and sign in with the current user account'
     } | ConvertTo-Json
 }
 finally {

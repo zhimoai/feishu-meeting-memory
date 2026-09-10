@@ -17,15 +17,11 @@
 
 不同用户不得复制或共用 token。scope 只授予接口能力，文档与妙记 ACL 仍以当前登录用户在飞书中的实际权限为准。
 
-当前截图中的 App Secret 已经出现在聊天/截图中，试点跑通后应在飞书开放平台重置。新 Secret 只放在本机用户配置或服务端密钥管理器中，不写进 Skill、Git 或聊天记录。
+当前截图中的 App Secret 已经出现在聊天/截图中，试点跑通后应在飞书开放平台重置。新 Secret 只放在 Skill 根目录中被 Git 忽略的 `config.json`，或正式部署时放入服务端密钥管理器；不写进源码、Git、Issue 或聊天记录。
 
 ## 2. 安装者生成配置文件
 
-真实配置不放在 Skill 目录。默认路径：
-
-- Windows：`%APPDATA%\feishu-meeting-memory\config.json`
-- macOS：`~/Library/Application Support/feishu-meeting-memory/config.json`
-- Linux：`${XDG_CONFIG_HOME:-~/.config}/feishu-meeting-memory/config.json`
+真实配置固定放在当前 Skill 根目录：`<skill-dir>/config.json`。启动脚本会自动把这个路径传给独立程序，OAuth 获取的用户令牌也写回同一个文件。
 
 Windows 本机试点在 Skill 目录运行：
 
@@ -47,9 +43,9 @@ sh ./scripts/configure.sh
 
 浏览器会打开飞书授权页。登录当前设备使用者自己的账号并同意授权；成功后回调到 `http://127.0.0.1:8080/callback`。该地址必须事先添加到应用后台“安全设置 → 重定向 URL”。OAuth 默认请求 `offline_access`，access token 临近过期时命令会自动刷新；只有刷新授权失效时才需要重新登录。
 
-格式模板见 [config.example.json](config.example.json)，不要在模板中填写真实密钥。
+格式模板见 Skill 根目录的 [config.example.json](../config.example.json)。复制为 `config.json` 后再填写；不要直接在模板中填写真实密钥。
 
-也可用 `FEISHU_CONFIG_FILE` 指向另一份 JSON。环境变量继续受支持并优先于配置文件，只建议用于临时覆盖或自动化测试。
+开发者仍可用 `FEISHU_CONFIG_FILE` 临时指向另一份 JSON，环境变量也继续优先于配置文件；普通使用者不需要设置这些覆盖项。
 
 ## 3. 本机试点与正式分发
 
