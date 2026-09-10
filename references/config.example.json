@@ -1,0 +1,9 @@
+{
+  "app_id": "cli_xxx",
+  "app_secret": "replace-with-new-secret",
+  "oauth_redirect_uri": "http://127.0.0.1:8080/callback",
+  "oauth_scope": "space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.search:read minutes:minutes.basic:read minutes:minutes.artifacts:read minutes:minutes.transcript:export vc:note:read wiki:node:retrieve offline_access",
+  "user_open_id": "ou_xxx",
+  "api_base": "https://open.feishu.cn",
+  "http_timeout_seconds": 30
+}

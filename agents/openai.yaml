@@ -1,0 +1,4 @@
+interface:
+  display_name: "飞书会议知识"
+  short_description: "使用个人飞书授权检索录音豆会议、纪要、逐字稿与行动项"
+  default_prompt: "使用 $feishu-meeting-memory 查询我最近的飞书录音会议，并从智能纪要和文字记录中提取结论与行动项。"

@@ -1,0 +1,16 @@
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+.env
+.env.*
+config.json
+*.local.json
+*.log
+
+.feishu-meetings/
+minutes/
+notes/
+dist/
+coverage/
