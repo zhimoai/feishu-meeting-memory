@@ -112,7 +112,7 @@ sh '<skill-dir>/scripts/feishu-meetings.sh' evidence <minute_token_or_url>
 
 ## 进一步参考
 
-- 首次安装、管理员配置、个人授权与验收：[references/installation.md](references/installation.md)
+- 安装、更新、管理员配置、个人授权与验收：[references/installation.md](references/installation.md)
 - 生产部署所需的完整只读权限、可选权限与错误码：[references/deployment-permissions.md](references/deployment-permissions.md)
 - 首次接入、身份模式、权限与发布检查：[references/setup.md](references/setup.md)
 - 飞书能力边界、API 关系和可扩展方向：[references/feishu-capabilities.md](references/feishu-capabilities.md)

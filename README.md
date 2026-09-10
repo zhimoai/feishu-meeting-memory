@@ -38,7 +38,9 @@ App ID 用于标识飞书应用，个人 OAuth 令牌用于标识当前使用者
 
 预编译文件的校验值位于 [`bin/SHA256SUMS`](bin/SHA256SUMS)。这些程序目前没有商业代码签名；受企业终端策略限制时，应从源码重建并由企业签名。
 
-## 快速安装到 Codex
+## 安装与更新
+
+### 首次安装
 
 在 Codex 中发送：
 
@@ -49,12 +51,27 @@ https://github.com/zhimoai/feishu-meeting-memory
 
 Codex 会把完整 Skill 安装到用户级 Skill 目录。若安装后没有立即出现，重启 Codex，再输入 `$feishu-meeting-memory` 检查是否可以选中。
 
-也可以手动把整个仓库复制到：
+也可以手动把整个仓库复制到用户级 Skill 目录：
 
-- Windows：`%USERPROFILE%\.agents\skills\feishu-meeting-memory`
-- macOS/Linux：`$HOME/.agents/skills/feishu-meeting-memory`
+- Windows：`%USERPROFILE%\.codex\skills\feishu-meeting-memory`
+- macOS/Linux：`$HOME/.codex/skills/feishu-meeting-memory`
 
 不能只复制 `SKILL.md`；`agents/`、`bin/`、`references/` 和 `scripts/` 都是运行所需内容。完整步骤见[首次安装与授权指引](references/installation.md)。
+
+### 更新已安装的 Skill
+
+`config.json` 保存本机的 App Secret 和个人 OAuth 令牌，更新时必须保留。推荐在 Codex 中发送：
+
+```text
+请更新已安装的 feishu-meeting-memory Skill：
+https://github.com/zhimoai/feishu-meeting-memory
+
+更新前把现有 config.json 安全备份到 Skill 目录之外，不要读取或输出其中内容；
+安装最新版本后恢复 config.json，运行 doctor 验证；
+只有验证成功后才能删除备份，失败则恢复原版本。
+```
+
+通过 Git 克隆安装时，也可以在 Skill 目录执行 `git pull --ff-only`。`config.json` 已被 Git 忽略，正常更新不会覆盖它；更新前仍建议保留一份安全备份。更新完成后运行 `doctor`。若新版增加了 OAuth scope，还需要在飞书后台开通权限、发布应用版本，并重新执行 `oauth-login --full`。
 
 ## 准备飞书应用
 
@@ -287,7 +304,7 @@ feishu-meeting-memory/
 
 ## 文档
 
-- [首次安装与授权](references/installation.md)
+- [安装、更新与授权](references/installation.md)
 - [完整部署权限](references/deployment-permissions.md)
 - [配置、身份模型与故障排查](references/setup.md)
 - [飞书 API 能力与限制](references/feishu-capabilities.md)

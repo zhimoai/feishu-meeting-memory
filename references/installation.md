@@ -1,4 +1,4 @@
-# 飞书录音会议 Skill 首次安装与授权指引
+# 飞书会议知识提取 Skill 安装、更新与授权指引
 
 本指引适用于个人授权版 `feishu-meeting-memory`：每位使用者把录音设备绑定到自己的飞书账号，Skill 通过该用户自己的 OAuth 身份查找和读取会议资料。
 
@@ -123,8 +123,8 @@ https://github.com/zhimoai/feishu-meeting-memory
 
 适合在该用户的所有 Codex 项目中使用。
 
-- Windows：`%USERPROFILE%\.agents\skills\feishu-meeting-memory`
-- macOS/Linux：`$HOME/.agents/skills/feishu-meeting-memory`
+- Windows：`%USERPROFILE%\.codex\skills\feishu-meeting-memory`
+- macOS/Linux：`$HOME/.codex/skills/feishu-meeting-memory`
 
 把完整 Skill 目录复制到上述位置。复制后应当直接看到以下内容：
 
@@ -150,7 +150,60 @@ feishu-meeting-memory/
 
 Codex 会自动发现本地 Skill；如果列表中没有出现，重启 Codex。可在 Codex 中输入 `$feishu-meeting-memory` 检查是否能选中。OpenAI 官方说明见 [Build skills](https://developers.openai.com/codex/skills)。
 
-## 四、生成本机配置
+## 四、更新 Skill
+
+更新前必须保留 `config.json`。该文件包含 App Secret、user access token 和 refresh token，不在 Git 仓库中，也不会从 GitHub 重新下载。
+
+### 推荐：让 Codex 完成更新
+
+在 Codex 中发送以下内容：
+
+```text
+请更新已安装的 feishu-meeting-memory Skill：
+https://github.com/zhimoai/feishu-meeting-memory
+
+要求：
+1. 找到当前实际生效的安装目录。
+2. 将现有 config.json 安全备份到 Skill 目录之外，不要读取或输出其中内容。
+3. 用 $skill-installer 安装 GitHub 上的最新版本；如果目标目录已存在，先把旧目录移动到 Skill 发现目录之外，不要直接覆盖。
+4. 将 config.json 恢复到新版本根目录并运行 doctor。
+5. 只有 doctor 验证成功后才能删除旧目录和临时备份；失败时恢复原版本。
+```
+
+`$skill-installer` 不会覆盖已经存在的同名目录，因此更新必须先保存配置并移开旧目录。旧目录不能留在 `.codex/skills` 或项目 `.agents/skills` 中，否则 Codex 可能同时发现两个同名 Skill。
+
+### Git 克隆安装
+
+如果安装目录中存在 `.git`，可以在该目录执行：
+
+```bash
+git pull --ff-only
+```
+
+`config.json` 已被 `.gitignore` 排除，正常拉取不会覆盖它。如果 `git pull --ff-only` 提示存在本地修改或分支分叉，应停止更新并先处理差异，不要使用强制重置覆盖本地文件。
+
+### 更新后验证
+
+Windows：
+
+```powershell
+& .\scripts\feishu-meetings.ps1 doctor
+```
+
+macOS/Linux：
+
+```bash
+sh ./scripts/feishu-meetings.sh doctor
+```
+
+确认顶层 `"ok": true`、`token_source` 为 `user_access_token`，并且 `refresh_token_saved` 为 `true`。一般更新不需要重新授权；如果新版增加或调整了 OAuth scope，则需要：
+
+1. 在飞书开放平台开通新增权限。
+2. 创建并发布新的应用版本。
+3. 将 `config.example.json` 中更新后的非敏感配置项合并到 `config.json`。
+4. 重新运行 `oauth-login --full`。
+
+## 五、生成本机配置
 
 在文件管理器中打开 Skill 目录，复制根目录的 `config.example.json`，把副本命名为 `config.json`。用记事本或其他文本编辑器打开 `config.json`，只替换 `app_id` 和 `app_secret`，其余字段保持默认值。
 
@@ -183,7 +236,7 @@ chmod 600 ./config.json
 
 不要手工添加 token。完成下一步 OAuth 后，程序会自动写入 user access token 和 refresh token，并在需要时自动刷新。仓库已经通过 `.gitignore` 排除 `config.json`，但它仍然是敏感文件。不要复制其他用户的 `config.json`，也不要把已经配置过的 Skill 目录整体发给别人。
 
-## 五、用个人飞书账号授权
+## 六、用个人飞书账号授权
 
 ### Windows
 
@@ -208,7 +261,7 @@ sh ./scripts/feishu-meetings.sh oauth-login --full
 
 应用权限增加、用户切换账号或刷新授权失效后，需要重新运行 OAuth。重新授权会覆盖本机旧的个人令牌。
 
-## 六、验证完整流程
+## 七、验证完整流程
 
 ### 1. 检查授权状态
 
@@ -270,7 +323,7 @@ sh ./scripts/feishu-meetings.sh oauth-login --full
 
 验证完成的最低标准：能够列出个人会议、打开返回的飞书链接、读取一篇本人有权访问的智能纪要；增强模式还应能读取妙记产物或逐字稿。
 
-## 七、在 Codex 中使用
+## 八、在 Codex 中使用
 
 可以直接提问，也可以显式点名 Skill：
 
@@ -283,7 +336,7 @@ $feishu-meeting-memory 找出这场会议中关于报价的原话和时间戳。
 
 Skill 默认只读取资料，不修改文档、不发送消息、不申请文档权限，也不下载原始音视频。
 
-## 八、常见问题
+## 九、常见问题
 
 | 现象或错误 | 原因与处理 |
 |---|---|
@@ -297,7 +350,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 | Windows 阻止运行程序 | 预编译程序未做商业代码签名；企业电脑应由内部构建/签名流程处理。不要从未知来源下载替代程序。 |
 | 电脑没有 Python | 不受影响；最终用户只运行 Skill 自带的独立程序和系统 PowerShell/shell。 |
 
-## 九、安全检查
+## 十、安全检查
 
 - 每个人都使用自己的飞书账号 OAuth，不共享 token。
 - 不提交或分享 Skill 根目录的 `config.json`。
@@ -307,7 +360,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 - 用户离职、设备丢失或授权不再需要时，在飞书中撤销应用授权，并删除该设备上的本地配置。
 - 公共或大规模分发应使用 OAuth 网关，使终端不再保存 App Secret。
 
-## 十、验收清单
+## 十一、验收清单
 
 ### 管理员
 
@@ -320,7 +373,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 ### 使用者
 
 - [ ] 录音设备已绑定到本人的飞书账号。
-- [ ] Skill 完整目录已放到 `.agents/skills`。
+- [ ] Skill 完整目录已放到用户级 `.codex/skills` 或项目级 `.agents/skills`。
 - [ ] 已复制 `config.example.json` 为 `config.json`，并填写自己的 App ID/Secret。
 - [ ] 已使用本人账号完成 OAuth。
 - [ ] `doctor` 显示个人令牌和 refresh token 正常。

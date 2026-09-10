@@ -69,7 +69,7 @@ chmod 600 ./config.json
 
 技能包内已包含以下静态程序：Windows x64/ARM64、macOS Intel/Apple Silicon、Linux x64/ARM64。Windows 启动器会自动选择匹配的 `.exe`，macOS/Linux 启动器会选择匹配的 Mach-O/ELF 文件并在需要时补充执行权限。
 
-完整目录可安装到用户级 `$HOME/.agents/skills/feishu-meeting-memory`，或项目级 `.agents/skills/feishu-meeting-memory`。具体步骤见 [installation.md](installation.md)。
+完整目录可安装到用户级 `$HOME/.codex/skills/feishu-meeting-memory`，或项目级 `.agents/skills/feishu-meeting-memory`。安装和更新步骤见 [installation.md](installation.md)。
 
 发布或复制技能时必须保留 `bin/`、`scripts/feishu-meetings.ps1` 和 `scripts/feishu-meetings.sh`。不要只复制 `SKILL.md`。可用 `bin/SHA256SUMS` 检查二进制完整性；源码位于 `cmd/feishu-meetings/`，重建脚本位于 `scripts/build-binaries.ps1`，只有开发者重建时才需要 Go。
 
