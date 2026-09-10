@@ -120,27 +120,56 @@ http://127.0.0.1:8080/callback
 
 ## 首次配置与授权
 
-在安装后的 Skill 目录中打开终端。
+只做三件事：复制配置示例、填写两项应用凭据、登录飞书授权。
 
-### Windows
+### 1. 准备配置文件
+
+在安装后的 Skill 根目录中复制 [`config.example.json`](config.example.json)，把副本命名为 `config.json`。用记事本或其他文本编辑器打开，只替换下面两项：
+
+```json
+{
+  "app_id": "这里填写 App ID",
+  "app_secret": "这里填写 App Secret"
+}
+```
+
+不要删除示例中其余字段，也不要手工填写 token。JSON 必须使用英文双引号，最后一个字段后面不能多逗号。
+
+### 2. 登录并授权
+
+在 Skill 根目录打开终端，运行：
+
+Windows：
 
 ```powershell
-& .\scripts\configure.ps1
 & .\scripts\feishu-meetings.ps1 oauth-login --full
+```
+
+macOS/Linux：
+
+```bash
+sh ./scripts/feishu-meetings.sh oauth-login --full
+```
+
+命令会自动打开浏览器。登录录音设备绑定的飞书账号并同意授权即可。
+
+### 3. 检查是否成功
+
+Windows：
+
+```powershell
 & .\scripts\feishu-meetings.ps1 doctor
 ```
 
-### macOS/Linux
+macOS/Linux：
 
 ```bash
-sh ./scripts/configure.sh
-sh ./scripts/feishu-meetings.sh oauth-login --full
 sh ./scripts/feishu-meetings.sh doctor
 ```
 
-配置脚本会询问 App ID 和 App Secret，Secret 输入不会显示。OAuth 命令会打开浏览器，使用者应登录录音设备绑定的飞书账号并同意授权。
+看到 `status: ok` 即表示配置、授权和自动刷新能力正常。
 
-配置脚本会在 Skill 根目录创建：
+Skill 根目录中现在有：
 
 ```text
 feishu-meeting-memory/
@@ -150,25 +179,7 @@ feishu-meeting-memory/
 
 `config.json` 已在 `.gitignore` 中排除，但它会保存 App Secret、user access token 和 refresh token。不要把已经配置过的整个 Skill 文件夹打包发给别人；其他用户应从干净的 GitHub 仓库安装，然后填写自己的配置。
 
-### 手工使用配置示例
-
-不想运行配置脚本时，可以复制根目录的 [`config.example.json`](config.example.json)：
-
-Windows：
-
-```powershell
-Copy-Item .\config.example.json .\config.json
-notepad .\config.json
-```
-
-macOS/Linux：
-
-```bash
-cp ./config.example.json ./config.json
-chmod 600 ./config.json
-```
-
-只需要先替换 `app_id` 和 `app_secret`。JSON 必须使用英文双引号，不能写注释，最后一个字段后面不能多逗号。其他字段含义如下：
+配置文件其他字段通常不需要修改：
 
 | 字段 | 是否必填 | 说明 |
 |---|---|---|

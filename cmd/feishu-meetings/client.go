@@ -164,7 +164,7 @@ func newClientFromEnvWithRefresh(allowRefresh bool) (*client, error) {
 	case result.appID != "" || result.appSecret != "":
 		return nil, configurationError("FEISHU_APP_ID 与 FEISHU_APP_SECRET 必须同时配置")
 	default:
-		return nil, configurationError("请在 %s 配置 app_id/app_secret，或提供用户访问令牌", settings.ConfigPath)
+		return nil, configurationError("未找到应用凭据：请把 Skill 根目录的 config.example.json 复制为 config.json，并填写 app_id 与 app_secret（当前读取路径：%s）", settings.ConfigPath)
 	}
 	return result, nil
 }

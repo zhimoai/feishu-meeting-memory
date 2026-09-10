@@ -26,16 +26,18 @@
 Windows 本机试点在 Skill 目录运行：
 
 ```powershell
-& .\scripts\configure.ps1
+Copy-Item .\config.example.json .\config.json
+notepad .\config.json
 ```
 
 macOS/Linux 运行：
 
 ```bash
-sh ./scripts/configure.sh
+cp ./config.example.json ./config.json
+chmod 600 ./config.json
 ```
 
-脚本会交互询问 App ID 和 App Secret，Secret 输入不回显；Windows 文件 ACL 只保留当前用户，macOS/Linux 文件权限为 `0600`。随后运行：
+在 `config.json` 中只替换 App ID 和 App Secret，其余字段保持模板默认值。Windows 用户应确保该文件只对自己的账号可读；macOS/Linux 示例已经将权限设为 `0600`。随后运行：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 oauth-login --full
@@ -43,7 +45,7 @@ sh ./scripts/configure.sh
 
 浏览器会打开飞书授权页。登录当前设备使用者自己的账号并同意授权；成功后回调到 `http://127.0.0.1:8080/callback`。该地址必须事先添加到应用后台“安全设置 → 重定向 URL”。OAuth 默认请求 `offline_access`，access token 临近过期时命令会自动刷新；只有刷新授权失效时才需要重新登录。
 
-格式模板见 Skill 根目录的 [config.example.json](../config.example.json)。复制为 `config.json` 后再填写；不要直接在模板中填写真实密钥。
+格式模板见 Skill 根目录的 [config.example.json](../config.example.json)。不要直接在模板中填写真实密钥。
 
 开发者仍可用 `FEISHU_CONFIG_FILE` 临时指向另一份 JSON，环境变量也继续优先于配置文件；普通使用者不需要设置这些覆盖项。
 

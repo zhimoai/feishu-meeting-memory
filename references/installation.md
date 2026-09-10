@@ -152,45 +152,18 @@ Codex 会自动发现本地 Skill；如果列表中没有出现，重启 Codex�
 
 ## 四、生成本机配置
 
-在 Skill 目录打开终端。
+在文件管理器中打开 Skill 目录，复制根目录的 `config.example.json`，把副本命名为 `config.json`。用记事本或其他文本编辑器打开 `config.json`，只替换 `app_id` 和 `app_secret`，其余字段保持默认值。
 
-### Windows
+也可以在终端中完成复制：
 
-```powershell
-& .\scripts\configure.ps1
-```
-
-依次输入 App ID 和 App Secret。Secret 输入时不会显示。若 PowerShell 阻止本地脚本，可以只对本次进程放开：
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-& .\scripts\configure.ps1
-```
-
-### macOS/Linux
-
-```bash
-sh ./scripts/configure.sh
-```
-
-配置脚本会在当前 Skill 根目录生成：
-
-```text
-<skill-dir>/config.json
-```
-
-此文件同时保存 App ID、App Secret，以及 OAuth 登录后自动写入的 user access token 和 refresh token。仓库已经通过 `.gitignore` 排除它，但它仍然是敏感文件。
-
-不运行配置脚本时，也可以复制根目录的配置示例：
-
-### Windows 手工配置
+### Windows（可选）
 
 ```powershell
 Copy-Item .\config.example.json .\config.json
 notepad .\config.json
 ```
 
-### macOS/Linux 手工配置
+### macOS/Linux（可选）
 
 ```bash
 cp ./config.example.json ./config.json
@@ -208,7 +181,7 @@ chmod 600 ./config.json
 | `api_base` | 中国版飞书保持 `https://open.feishu.cn` |
 | `http_timeout_seconds` | 保持 30；网络较慢时再调整 |
 
-不要手工添加 token。完成下一步 OAuth 后，程序会自动写入并自动刷新。不要复制其他用户的 `config.json`，也不要把已经配置过的 Skill 目录整体发给别人。
+不要手工添加 token。完成下一步 OAuth 后，程序会自动写入 user access token 和 refresh token，并在需要时自动刷新。仓库已经通过 `.gitignore` 排除 `config.json`，但它仍然是敏感文件。不要复制其他用户的 `config.json`，也不要把已经配置过的 Skill 目录整体发给别人。
 
 ## 五、用个人飞书账号授权
 
@@ -348,7 +321,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 
 - [ ] 录音设备已绑定到本人的飞书账号。
 - [ ] Skill 完整目录已放到 `.agents/skills`。
-- [ ] 已运行配置脚本。
+- [ ] 已复制 `config.example.json` 为 `config.json`，并填写自己的 App ID/Secret。
 - [ ] 已使用本人账号完成 OAuth。
 - [ ] `doctor` 显示个人令牌和 refresh token 正常。
 - [ ] `meetings --days 30` 能返回会议列表。

@@ -337,7 +337,7 @@ func commandOAuthLogin(args []string) (any, error) {
 		return nil, err
 	}
 	if settings.AppID == "" || settings.AppSecret == "" {
-		return nil, configurationError("oauth-login 需要在 %s 配置 app_id 与 app_secret", settings.ConfigPath)
+		return nil, configurationError("未找到应用凭据：请把 Skill 根目录的 config.example.json 复制为 config.json，并填写 app_id 与 app_secret（当前读取路径：%s）", settings.ConfigPath)
 	}
 	oauthBase := strings.TrimSpace(settings.OAuthBase)
 	if oauthBase == "" {

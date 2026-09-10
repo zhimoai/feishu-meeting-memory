@@ -15,7 +15,7 @@ metadata:
 
 本技能自带 Windows、macOS 和 Linux 的 64 位独立程序，不要求安装 Python、Node.js、Go 或第三方 CLI。输出均为 UTF-8 JSON；长正文或逐字稿会保存到临时文件，并在 JSON 中返回绝对路径。
 
-个人授权仍需要一个飞书应用。首次安装先运行 `scripts/configure.ps1`（Windows）或 `scripts/configure.sh`（macOS/Linux），填写应用提供方给出的 App ID/Secret；脚本会在 Skill 根目录创建被 Git 忽略的 `config.json`。也可以复制根目录的 `config.example.json` 后手工修改。然后运行 `oauth-login --full`，在浏览器登录当前使用者自己的飞书账号。完整只读权限见 [references/deployment-permissions.md](references/deployment-permissions.md)。OAuth 会申请 `offline_access`，并把当前用户令牌写回同一个 `config.json`；后续命令会在令牌临近过期时自动刷新。不要共享或提交真实配置，也不要复制已经配置过的 Skill 目录给其他人。
+个人授权仍需要一个飞书应用。首次安装只需把根目录的 `config.example.json` 复制为 `config.json`，替换其中的 `app_id` 和 `app_secret`，然后运行 `oauth-login --full`，在浏览器登录当前使用者自己的飞书账号。完整只读权限见 [references/deployment-permissions.md](references/deployment-permissions.md)。OAuth 会申请 `offline_access`，并把当前用户令牌写回同一个 `config.json`；后续命令会在令牌临近过期时自动刷新。不要共享或提交真实配置，也不要复制已经配置过的 Skill 目录给其他人。
 
 Windows 使用：
 
