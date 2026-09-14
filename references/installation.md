@@ -188,7 +188,32 @@ sh ./scripts/feishu-meetings.sh doctor
 
 ### 组织成员
 
-如果管理员已经把组织初始配置预置到 Skill 根目录，确认存在 `config.json` 后直接进入“六、首次授权”，无需打开或修改它。
+组织成员不需要创建应用。管理员应通过企业设备管理或其他安全渠道提供一份尚未写入个人 token 的组织初始配置。
+
+使用 `$skill-installer` 安装后，配置文件应放在：
+
+| 安装方式 | `config.json` 路径 |
+|---|---|
+| Windows 用户级安装 | `%USERPROFILE%\.codex\skills\feishu-meeting-memory\config.json` |
+| macOS/Linux 用户级安装 | `~/.codex/skills/feishu-meeting-memory/config.json` |
+| 项目级安装 | `<项目目录>/.agents/skills/feishu-meeting-memory/config.json` |
+
+Windows 用户可以把 `%USERPROFILE%\.codex\skills\feishu-meeting-memory` 直接粘贴到文件资源管理器地址栏。`config.json` 必须和 `SKILL.md` 位于同一层，不能命名为 `config.json.txt`。
+
+组织初始配置内容如下，其中前两个值由管理员填写：
+
+```json
+{
+  "app_id": "组织统一的飞书 App ID",
+  "app_secret": "组织统一的飞书 App Secret",
+  "oauth_redirect_uri": "http://127.0.0.1:8080/callback",
+  "oauth_scope": "space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.search:read minutes:minutes.basic:read minutes:minutes.artifacts:read minutes:minutes.transcript:export vc:note:read wiki:node:retrieve offline_access",
+  "api_base": "https://open.feishu.cn",
+  "http_timeout_seconds": 30
+}
+```
+
+确认文件已放好后直接进入“六、首次授权”，普通成员无需打开或修改它。
 
 ### 独立部署者
 

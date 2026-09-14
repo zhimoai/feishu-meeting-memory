@@ -103,13 +103,75 @@ https://github.com/zhimoai/feishu-meeting-memory
 
 ### 组织成员
 
-管理员应通过企业设备管理或其他安全渠道，将只包含 App ID/Secret、尚未写入任何个人 token 的 `config.json` 放到 Skill 根目录。成员安装后可直接在 Codex 中发起会议请求：
+组织成员不需要进入飞书开发者后台，也不需要创建应用。管理员应通过企业设备管理或其他安全渠道提供一份只包含组织应用信息、尚未写入任何个人 token 的 `config.json`。
+
+#### 第 1 步：打开配置目录
+
+使用本项目推荐的 `$skill-installer` 安装后，Windows 用户把下面的路径复制到文件资源管理器地址栏并按回车：
+
+```text
+%USERPROFILE%\.codex\skills\feishu-meeting-memory
+```
+
+展开后通常类似：
+
+```text
+C:\Users\你的Windows用户名\.codex\skills\feishu-meeting-memory
+```
+
+macOS/Linux 的默认目录是：
+
+```text
+~/.codex/skills/feishu-meeting-memory
+```
+
+如果采用项目级安装，则目录是：
+
+```text
+<项目目录>/.agents/skills/feishu-meeting-memory
+```
+
+打开后应当能看到 `SKILL.md`、`config.example.json`、`bin` 和 `scripts`。看不到 `SKILL.md` 说明进入了错误目录。
+
+#### 第 2 步：放入组织配置
+
+管理员提供的文件必须命名为 `config.json`，并放在 `SKILL.md` 旁边。初始内容如下，其中 `app_id` 和 `app_secret` 由管理员替换为组织应用的真实值：
+
+```json
+{
+  "app_id": "组织统一的飞书 App ID",
+  "app_secret": "组织统一的飞书 App Secret",
+  "oauth_redirect_uri": "http://127.0.0.1:8080/callback",
+  "oauth_scope": "space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.search:read minutes:minutes.basic:read minutes:minutes.artifacts:read minutes:minutes.transcript:export vc:note:read wiki:node:retrieve offline_access",
+  "api_base": "https://open.feishu.cn",
+  "http_timeout_seconds": 30
+}
+```
+
+最终目录结构应当是：
+
+```text
+feishu-meeting-memory/
+├── SKILL.md
+├── config.example.json
+├── config.json             # 管理员提供的组织配置
+├── bin/
+└── scripts/
+```
+
+注意 Windows 可能隐藏文件扩展名，文件不能叫 `config.json.txt`。普通成员不要修改字段，也不要手工添加 `user_access_token` 或 `refresh_token`。
+
+#### 第 3 步：首次授权
+
+回到 Codex，直接发起会议请求：
 
 ```text
 $feishu-meeting-memory 最近开了哪些会？
 ```
 
-Skill 检测到尚未授权时会自动打开浏览器。使用者登录自己的飞书账号并同意授权后，原会议请求会继续执行。组织成员无需进入飞书开发者后台，也无需手工填写或复制 token。
+Skill 检测到尚未授权时会自动打开浏览器。使用者登录自己的飞书账号并同意授权后，原会议请求会继续执行。个人 token 会自动保存到本机的 `config.json`，后续通常无需再次登录。
+
+完成授权后的 `config.json` 只能保留在本人电脑上，不能发送给其他成员。管理员只应分发尚未授权、不含任何个人 token 的初始配置；真实 App Secret 也不能放进公共 GitHub 仓库、群聊或截图。
 
 ### 独立部署者
 
