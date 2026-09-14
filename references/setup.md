@@ -19,9 +19,11 @@
 
 App Secret 只应保存在 Skill 根目录中被 Git 忽略的 `config.json`，或多人部署时保存在服务端密钥管理器中；不得写入源码、Git、Issue、日志或聊天记录。已经泄露的 Secret 必须在飞书开放平台重置。
 
-## 2. 安装者生成配置文件
+## 2. 配置文件
 
 真实配置固定放在当前 Skill 根目录：`<skill-dir>/config.json`。启动脚本会自动把这个路径传给独立程序，OAuth 获取的用户令牌也写回同一个文件。
+
+同一组织内，管理员可以安全预置只含 App ID/Secret、没有任何个人 token 的初始配置，普通成员无需编辑。组织外独立部署者才需要复制示例并填写自己的应用信息：
 
 Windows：
 
@@ -37,7 +39,9 @@ cp ./config.example.json ./config.json
 chmod 600 ./config.json
 ```
 
-在 `config.json` 中只替换 App ID 和 App Secret，其余字段保持模板默认值。Windows 用户应确保该文件只对自己的账号可读；macOS/Linux 示例已经将权限设为 `0600`。随后运行：
+在 `config.json` 中只替换 App ID 和 App Secret，其余字段保持模板默认值。Windows 用户应确保该文件只对自己的账号可读；macOS/Linux 示例已经将权限设为 `0600`。
+
+在 Codex 中首次提出会议问题时，Skill 会在缺少个人令牌的情况下自动发起 OAuth 并在授权成功后继续原请求。直接使用命令行或排障时才需要手工运行：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 oauth-login --full
@@ -57,7 +61,7 @@ chmod 600 ./config.json
 
 ### 企业内部部署
 
-应用管理员将使用者加入应用可用范围，每位使用者分别运行 `oauth-login`。如需在终端保存 App Secret，应将部署范围限制在受控设备，并配合操作系统权限、磁盘加密和凭据轮换策略。
+同一组织只需要一个企业自建应用。应用管理员将使用者加入应用可用范围并安全预置初始配置；每位使用者首次会议查询时分别用自己的账号完成 OAuth。如需在终端保存 App Secret，应将部署范围限制在受控设备，并配合操作系统权限、磁盘加密和凭据轮换策略。
 
 ### 公共或大规模分发
 
@@ -89,6 +93,8 @@ chmod 600 ./config.json
 4. 用一个无敏感内容的测试录音验证完整链路，不要一开始就用真实客户会议。
 
 ## 6. 验证
+
+普通使用者以一次真实的近期会议查询作为主流程验证即可。下面的逐项命令仅供管理员部署验收和故障排查：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 permissions

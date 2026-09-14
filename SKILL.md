@@ -15,7 +15,18 @@ metadata:
 
 本技能自带 Windows、macOS 和 Linux 的 64 位独立程序，不要求安装 Python、Node.js、Go 或第三方 CLI。输出均为 UTF-8 JSON；长正文或逐字稿会保存到临时文件，并在 JSON 中返回绝对路径。
 
-个人授权仍需要一个飞书应用。首次安装只需把根目录的 `config.example.json` 复制为 `config.json`，替换其中的 `app_id` 和 `app_secret`，然后运行 `oauth-login --full`，在浏览器登录当前使用者自己的飞书账号。完整只读权限见 [references/deployment-permissions.md](references/deployment-permissions.md)。OAuth 会申请 `offline_access`，并把当前用户令牌写回同一个 `config.json`；后续命令会在令牌临近过期时自动刷新。不要共享或提交真实配置，也不要复制已经配置过的 Skill 目录给其他人。
+同一飞书组织只需管理员创建和发布一个企业自建应用，并把使用者加入应用可用范围；组织成员无需各自创建应用。当前桌面模式仍需由管理员安全预置 App ID/Secret，独立部署者则把根目录的 `config.example.json` 复制为 `config.json` 并填写自己的应用凭据。完整只读权限见 [references/deployment-permissions.md](references/deployment-permissions.md)。每位使用者都必须用自己的飞书账号完成 OAuth，不得复制或共用其他人的 token。
+
+## 首次使用与自动授权
+
+处理第一次会议请求时，先检查本机授权状态，不要求用户手工运行一串诊断命令：
+
+1. 若 `config.json` 已有有效用户令牌，直接处理原请求。
+2. 若已有 App ID/Secret 但尚无用户令牌，自动运行 `oauth-login --full`，告知用户在打开的飞书页面中登录并同意授权；成功后继续处理原请求。
+3. 若 access token 已过期但 refresh token 可用，正常执行原命令，由程序自动刷新。
+4. 若没有应用配置，先询问用户是否属于已部署该应用的组织。组织成员应取得管理员安全下发的“仅应用凭据配置”；独立部署者才需要创建自己的飞书应用。
+
+OAuth 必须由用户在飞书页面确认，不能静默代替用户授权。OAuth 会申请 `offline_access`，并把个人令牌写回同一个 `config.json`；后续命令会在令牌临近过期时自动刷新。不得提交真实配置，也不得分发已经写入个人 token 的 Skill 目录。
 
 Windows 使用：
 
@@ -49,7 +60,7 @@ sh '<skill-dir>/scripts/feishu-meetings.sh' evidence <minute_token_or_url>
 
 若操作系统或 CPU 不受支持，明确报告当前平台；不要自动下载可执行文件。预编译文件的 SHA-256 在 `bin/SHA256SUMS`，可审计源码在 `cmd/feishu-meetings/`。
 
-只有首次配置、鉴权失败或 scope/ACL 错误时运行 `doctor`。配置与飞书后台权限见 [references/setup.md](references/setup.md)。
+仅在首次状态检查、鉴权失败或 scope/ACL 错误时运行 `doctor`。配置与飞书后台权限见 [references/setup.md](references/setup.md)。
 
 ## 个人身份与权限不变量
 

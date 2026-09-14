@@ -1,12 +1,12 @@
 # 飞书会议知识提取 Skill 安装、更新与授权指引
 
-本指引适用于个人授权版 `feishu-meeting-memory`：每位使用者把录音设备绑定到自己的飞书账号，Skill 通过该用户自己的 OAuth 身份查找和读取会议资料。
+本指引适用于个人授权版 `feishu-meeting-memory`：每位使用者把录音设备绑定到自己的飞书账号，Skill 通过该用户自己的 OAuth 身份查找和读取会议资料。同一飞书组织只需要一个应用，普通成员无需各自创建。
 
 最终用户不需要安装 Python、Node.js、Go 或飞书 CLI。Skill 已包含 Windows、macOS 和 Linux 的独立程序。
 
 ## 一、先分清两种角色
 
-### 飞书应用管理员：只需准备一次
+### 飞书应用管理员：整个组织只准备一次
 
 管理员负责创建应用、开通权限、配置回调地址、发布版本和设置可用范围。
 
@@ -14,9 +14,11 @@
 
 使用者安装 Skill 后，用自己的飞书账号完成浏览器授权。每个人获得独立的用户令牌，只能访问本人原本有权查看的会议资料。
 
-个人账号不能脱离应用直接调用飞书 OpenAPI，因此需要一个已发布的飞书应用。公共或大规模分发应使用 OAuth 网关保管 App Secret，避免将 Secret 分发到终端设备。
+个人账号不能脱离应用直接调用飞书 OpenAPI，因此需要一个已发布的飞书应用。组织外的独立部署者需要自己的应用；公共或大规模分发应使用 OAuth 网关保管 App Secret，避免将 Secret 分发到终端设备。
 
 ## 二、管理员准备飞书应用
+
+普通组织成员跳过本节，直接从“三、安装 Skill”开始。管理员只需为整个组织配置一次。
 
 ### 1. 登录飞书开放平台
 
@@ -37,38 +39,15 @@
 
 App ID 用来识别应用；App Secret 相当于应用密码。两者稍后填入 Skill 根目录的 `config.json`。
 
-### 3. 开通完整个人只读权限
+### 3. 开通只读权限
 
-部署前先查看 [完整部署权限清单](deployment-permissions.md)，也可以在 Skill 目录运行：
+在应用左侧进入“权限管理”，按照[管理员一次性配置](deployment-permissions.md)开通会议搜索、纪要、逐字稿、云文档读取和自动续期权限。也可以在 Skill 目录运行下面的命令查看准确清单：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 permissions
 ```
 
-在应用左侧点击“权限管理”，点击开通权限，并逐项搜索以下 scope。若后台要求选择“应用身份”或“用户身份”，按后台对该 scope 的可选方式开通；本 Skill 查询个人会议时最终使用用户身份授权。
-
-| 用途 | 权限 |
-|---|---|
-| 持续刷新个人授权 | `offline_access`（持续访问已授权的数据） |
-| 枚举个人云盘会议文档 | `space:document:retrieve` 或 `drive:drive:readonly` |
-| 读取智能纪要和文字记录 | `docx:document:readonly` |
-| 搜索云文档 | `search:docs:read` |
-| 搜索本人可见妙记 | `minutes:minutes.search:read` |
-
-完整提取飞书 AI 产物和原始录音稿还必须开通：
-
-| 用途 | 权限 |
-|---|---|
-| 妙记基础信息 | `minutes:minutes.basic:read` |
-| 总结、待办、章节和关键词 | `minutes:minutes.artifacts:read` |
-| 导出妙记逐字稿 | `minutes:minutes.transcript:export` |
-| 智能纪要关系 | `vc:note:read` |
-| 知识库页面 | `wiki:node:retrieve` |
-| 联系人姓名检索 | `contact:user:search`（可选） |
-
-飞书后台若显示旧版同义权限，以后台当前权限名和 API 报错建议为准，不要同时申请不需要的写权限。
-
-权限只决定接口是否可以调用，不会自动赋予某篇会议或文档的访问权。实际读取范围仍等于登录用户在飞书界面中原本可以查看的范围。
+本 Skill 查询个人会议时使用用户身份。权限只决定接口是否可以调用，不会自动赋予某篇会议或文档的访问权；实际读取范围仍等于登录用户在飞书界面中原本可以查看的范围。
 
 ### 4. 添加重定向 URL
 
@@ -96,9 +75,11 @@ http://127.0.0.1:8080/callback
 
 新增权限或修改回调地址后，都要重新创建并发布版本。已经授权过的用户还必须重新执行 `oauth-login --full`，否则旧令牌中没有新增权限。
 
-### 7. 准备本机配置
+### 7. 准备组织初始配置
 
-将 App ID 和 App Secret 写入本机 Skill 根目录的 `config.json`。不得将真实凭据写入 README、示例文件、群聊、文档、Skill 包或源码；Secret 一旦泄露，应立即在飞书开放平台重置。
+管理员为成员准备只包含 App ID/Secret、尚未写入个人 token 的 `config.json`，再通过企业设备管理或其他安全渠道预置到 Skill 根目录。不要把已完成个人 OAuth 的配置发给任何人。
+
+不得将真实凭据写入 README、示例文件、群聊、公共网盘、Skill 包或源码；Secret 一旦泄露，应立即在飞书开放平台重置。无法安全预置 Secret 的大规模场景应改用服务端 OAuth 网关。
 
 官方参考：
 
@@ -200,12 +181,18 @@ sh ./scripts/feishu-meetings.sh doctor
 
 1. 在飞书开放平台开通新增权限。
 2. 创建并发布新的应用版本。
-3. 将 `config.example.json` 中更新后的非敏感配置项合并到 `config.json`。
+3. 管理员或独立部署者将 `config.example.json` 中更新后的非敏感配置项合并到 `config.json`。
 4. 重新运行 `oauth-login --full`。
 
 ## 五、生成本机配置
 
-在文件管理器中打开 Skill 目录，复制根目录的 `config.example.json`，把副本命名为 `config.json`。用记事本或其他文本编辑器打开 `config.json`，只替换 `app_id` 和 `app_secret`，其余字段保持默认值。
+### 组织成员
+
+如果管理员已经把组织初始配置预置到 Skill 根目录，确认存在 `config.json` 后直接进入“六、首次授权”，无需打开或修改它。
+
+### 独立部署者
+
+如果不属于已部署该应用的组织，在文件管理器中打开 Skill 目录，复制根目录的 `config.example.json`，把副本命名为 `config.json`。用记事本或其他文本编辑器打开 `config.json`，只替换自己应用的 `app_id` 和 `app_secret`，其余字段保持默认值。
 
 也可以在终端中完成复制：
 
@@ -234,9 +221,19 @@ chmod 600 ./config.json
 | `api_base` | 中国版飞书保持 `https://open.feishu.cn` |
 | `http_timeout_seconds` | 保持 30；网络较慢时再调整 |
 
-不要手工添加 token。完成下一步 OAuth 后，程序会自动写入 user access token 和 refresh token，并在需要时自动刷新。仓库已经通过 `.gitignore` 排除 `config.json`，但它仍然是敏感文件。不要复制其他用户的 `config.json`，也不要把已经配置过的 Skill 目录整体发给别人。
+不要手工添加 token。完成下一步 OAuth 后，程序会自动写入 user access token 和 refresh token，并在需要时自动刷新。仓库已经通过 `.gitignore` 排除 `config.json`，但它仍然是敏感文件。只可分发未授权、不含任何个人 token 的组织初始配置；不得复制其他用户已经授权的 `config.json`，也不要把已经配置过的 Skill 目录整体发给别人。
 
-## 六、用个人飞书账号授权
+## 六、首次授权
+
+推荐直接在 Codex 中提出第一次会议问题：
+
+```text
+$feishu-meeting-memory 最近开了哪些会？
+```
+
+Skill 检测到已有应用配置但尚无个人令牌时，会自动打开飞书授权页。使用者登录录音设备绑定的飞书账号并同意后，Skill 会继续执行刚才的会议请求。安装过程不能替用户静默同意授权，浏览器中的确认只需本人完成一次。
+
+只有直接使用命令行或排障时，才需要手工运行下面的命令。
 
 ### Windows
 
@@ -261,12 +258,11 @@ sh ./scripts/feishu-meetings.sh oauth-login --full
 
 应用权限增加、用户切换账号或刷新授权失效后，需要重新运行 OAuth。重新授权会覆盖本机旧的个人令牌。
 
-## 七、验证完整流程
+## 七、验证
 
-### 1. 检查授权状态
+查询成功返回会议列表就表示主流程已经跑通。需要检查授权状态时再运行：
 
 ```powershell
-& .\scripts\feishu-meetings.ps1 permissions
 & .\scripts\feishu-meetings.ps1 doctor
 ```
 
@@ -276,7 +272,7 @@ sh ./scripts/feishu-meetings.sh oauth-login --full
 - `refresh_token_saved` 为 `true`；
 - 未输出 App Secret、access token 或 refresh token。
 
-### 2. 查询最近会议
+需要直接测试命令行时可以查询最近会议：
 
 ```powershell
 & .\scripts\feishu-meetings.ps1 meetings --days 30 --limit 10
@@ -284,44 +280,7 @@ sh ./scripts/feishu-meetings.sh oauth-login --full
 
 程序会从当前用户个人云盘中识别“智能纪要、文字记录、我的笔记”，按会议合并后返回标题、时间和原始链接。
 
-### 3. 查询今天会议
-
-```powershell
-& .\scripts\feishu-meetings.ps1 meetings --date '<YYYY-MM-DD>'
-```
-
-把日期替换为当天日期。
-
-### 4. 按标题筛选
-
-```powershell
-& .\scripts\feishu-meetings.ps1 meetings --days 30 --query '客户'
-```
-
-标题筛选不能代替正文语义判断。用户询问“关于新客户的会议”时，Codex 应先列出近期候选，再读取候选智能纪要确认。
-
-### 5. 读取智能纪要正文
-
-从会议结果中取 `kind` 为 `summary` 的 URL：
-
-```powershell
-& .\scripts\feishu-meetings.ps1 doc 'https://example.feishu.cn/docx/文档Token'
-```
-
-### 6. 验证增强能力
-
-```powershell
-& .\scripts\feishu-meetings.ps1 doctor --probe
-& .\scripts\feishu-meetings.ps1 search --days 7 --limit 5
-```
-
-需要验证具体妙记详情时，使用一条无敏感内容的测试妙记：
-
-```powershell
-& .\scripts\feishu-meetings.ps1 doctor --probe --minute '<minute_token或妙记URL>' --transcript --doc '<智能纪要URL>'
-```
-
-验证完成的最低标准：能够列出个人会议、打开返回的飞书链接、读取一篇本人有权访问的智能纪要；增强模式还应能读取妙记产物或逐字稿。
+标题筛选、文档正文、妙记产物和逐字稿等进阶验收命令见[管理员一次性配置](deployment-permissions.md)与[接入和排障参考](setup.md)。普通使用者无需执行完整探测。
 
 ## 八、在 Codex 中使用
 
@@ -374,9 +333,7 @@ Skill 默认只读取资料，不修改文档、不发送消息、不申请文�
 
 - [ ] 录音设备已绑定到本人的飞书账号。
 - [ ] Skill 完整目录已放到用户级 `.codex/skills` 或项目级 `.agents/skills`。
-- [ ] 已复制 `config.example.json` 为 `config.json`，并填写自己的 App ID/Secret。
-- [ ] 已使用本人账号完成 OAuth。
-- [ ] `doctor` 显示个人令牌和 refresh token 正常。
+- [ ] Skill 根目录已有管理员预置的组织初始配置；独立部署者则已填写自己的应用信息。
+- [ ] 首次会议提问时已使用本人账号完成浏览器 OAuth。
 - [ ] `meetings --days 30` 能返回会议列表。
-- [ ] 至少一篇智能纪要可以通过 `doc` 读取。
-- [ ] 一条妙记可以导出带说话人与时间戳的完整转写稿。
+- [ ] 需要深度提取时，至少一篇本人可见的智能纪要可以读取。

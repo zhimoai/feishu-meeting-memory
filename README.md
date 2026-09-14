@@ -28,6 +28,18 @@ Skill 默认只读：不会修改云文档、发送消息、申请文档权限�
 
 App ID 用于标识飞书应用，个人 OAuth 令牌用于标识当前使用者。接口权限和单条会议/文档的访问权限是两道独立的限制：Skill 只能读取当前登录用户原本有权查看的资料。
 
+## 授权模式
+
+### 同一组织使用
+
+一个飞书组织只需由管理员创建并发布一个企业自建应用。管理员把成员加入应用可用范围并安全预置应用凭据后，成员不需要创建应用；安装 Skill 后首次查询会议时，浏览器会自动打开飞书授权页。每位成员仍需登录自己的账号并同意授权，Skill 只读取该账号原本可见的资料。
+
+### 独立使用
+
+不属于上述组织的使用者，需要由所在组织的管理员创建自己的飞书应用。公共仓库不会包含任何 App Secret，也不会共用项目维护者的用户令牌。
+
+当前本地架构在换取和刷新用户令牌时需要 App Secret。若要面向组织外用户提供“安装后只点授权”的体验，需要部署服务端 OAuth 网关；部分妙记接口仅支持企业自建应用，采用商店应用前还需逐接口确认兼容性。
+
 ## 支持平台
 
 | 操作系统 | CPU 架构 | 最终用户需要额外运行环境 |
@@ -73,73 +85,35 @@ https://github.com/zhimoai/feishu-meeting-memory
 
 通过 Git 克隆安装时，也可以在 Skill 目录执行 `git pull --ff-only`。`config.json` 已被 Git 忽略，正常更新不会覆盖它；更新前仍建议保留一份安全备份。更新完成后运行 `doctor`。若新版增加了 OAuth scope，还需要在飞书后台开通权限、发布应用版本，并重新执行 `oauth-login --full`。
 
-## 准备飞书应用
+## 管理员一次性准备飞书应用
 
-每位使用者需要一个能够发起个人 OAuth 的已发布飞书应用。完整的妙记 API 能力依赖企业自建应用，并要求实际使用者位于应用可用范围。
+同一个飞书组织只需由管理员准备一个企业自建应用，普通成员不需要分别创建应用。管理员只做一次以下操作：
 
-### 第 1 步：进入开发者后台
+1. 在[飞书开放平台开发者后台](https://open.feishu.cn/app)创建企业自建应用。
+2. 开通会议搜索、纪要、逐字稿、云文档读取和自动续期所需的只读权限。
+3. 在“安全设置 → 重定向 URL”添加 `http://127.0.0.1:8080/callback`。
+4. 发布应用，并把实际使用者加入应用可用范围。
+5. 通过企业设备管理或其他安全渠道，为成员预置只含应用信息、不含任何个人 token 的 `config.json`。
 
-1. 打开[飞书开放平台开发者后台](https://open.feishu.cn/app)，使用准备读取会议的飞书账号登录。
-2. 点击“创建企业自建应用”。如果看不到这个按钮，说明当前账号可能没有开发应用权限，需要联系所在飞书组织的管理员。
-3. 填写应用名称，例如“飞书会议知识提取”，上传图标并填写简单描述，然后创建。
+详细点击路径、权限清单和管理员验收方法见[管理员一次性配置](references/deployment-permissions.md)。官方入门资料见[企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)。
 
-官方入门资料：[企业自建应用开发流程](https://open.feishu.cn/document/home/introduction-to-custom-app-development/self-built-application-development-process)。
-
-### 第 2 步：复制 App ID 和 App Secret
-
-进入刚创建的应用，在左侧打开“凭证与基础信息”：
-
-1. 复制 `App ID`，通常以 `cli_` 开头。
-2. 点击显示并复制 `App Secret`。
-3. 将凭据保存在密码管理器中，不得写入截图、群聊或 GitHub。
-
-这两个值稍后写入 Skill 根目录的 `config.json`。App ID 可以公开识别应用，App Secret 必须保密。
-
-### 第 3 步：开通只读权限
-
-在左侧点击“权限管理”，逐项搜索并开通[完整部署权限清单](references/deployment-permissions.md)中的权限，包括云文档读取、妙记搜索与读取、原始转写稿和 `offline_access`。
-
-可在 Skill 目录运行以下命令，查看程序要求的准确 scope：
-
-```powershell
-& .\scripts\feishu-meetings.ps1 permissions
-```
-
-默认完整授权使用：
-
-```text
-space:document:retrieve docx:document:readonly search:docs:read minutes:minutes.search:read minutes:minutes.basic:read minutes:minutes.artifacts:read minutes:minutes.transcript:export vc:note:read wiki:node:retrieve offline_access
-```
-
-权限配置应遵循最小权限原则，不需要开通云文档写入、消息发送等无关能力。若后台显示的中文名称与本文不同，以后台搜索到的 scope 和 API 报错提示为准。
-
-### 第 4 步：添加 OAuth 回调地址
-
-打开左侧“安全设置”，停留在“重定向 URL”页签，添加下面的完整地址：
-
-```text
-http://127.0.0.1:8080/callback
-```
-
-协议、IP、端口和路径必须一字不差；`localhost`、缺少 `/callback` 或换成其他端口都不是同一个地址。
-
-### 第 5 步：添加测试人员并发布
-
-1. 打开“测试企业和人员”，把准备测试的飞书账号加入测试范围。
-2. 打开“版本管理与发布”，点击“创建版本”。
-3. 填写版本号和更新说明，确认应用可用范围包含实际使用者。
-4. 提交并发布；如果组织要求管理员审批，等待管理员通过。
-5. 回到应用首页，确认看到“当前修改均已发布”后再进行 OAuth。
-
-新增权限后，需要再次创建并发布应用版本；已经授权的用户还需重新运行 `oauth-login --full`。飞书访问凭证的身份区别可参考[官方访问凭证说明](https://open.feishu.cn/document/server-docs/api-call-guide/calling-process/get-access-token)。
+应用新增权限后需要重新发布，已授权成员也需再次授权。飞书访问凭证的身份区别见[官方访问凭证说明](https://open.feishu.cn/document/server-docs/api-call-guide/calling-process/get-access-token)。
 
 ## 首次配置与授权
 
-首次配置包括三个步骤：准备配置文件、完成飞书授权、检查运行状态。
+### 组织成员
 
-### 1. 准备配置文件
+管理员应通过企业设备管理或其他安全渠道，将只包含 App ID/Secret、尚未写入任何个人 token 的 `config.json` 放到 Skill 根目录。成员安装后可直接在 Codex 中发起会议请求：
 
-在安装后的 Skill 根目录中复制 [`config.example.json`](config.example.json)，把副本命名为 `config.json`。用记事本或其他文本编辑器打开，只替换下面两项：
+```text
+$feishu-meeting-memory 最近开了哪些会？
+```
+
+Skill 检测到尚未授权时会自动打开浏览器。使用者登录自己的飞书账号并同意授权后，原会议请求会继续执行。组织成员无需进入飞书开发者后台，也无需手工填写或复制 token。
+
+### 独立部署者
+
+复制 [`config.example.json`](config.example.json)，把副本命名为 `config.json`。用文本编辑器打开，只替换 `app_id` 和 `app_secret`：
 
 ```json
 {
@@ -150,9 +124,7 @@ http://127.0.0.1:8080/callback
 
 不要删除示例中其余字段，也不要手工填写 token。JSON 必须使用英文双引号，最后一个字段后面不能多逗号。
 
-### 2. 登录并授权
-
-在 Skill 根目录打开终端，运行：
+在 Codex 中发起第一次会议请求即可自动进入 OAuth。直接使用命令行时，可手工运行：
 
 Windows：
 
@@ -166,9 +138,9 @@ macOS/Linux：
 sh ./scripts/feishu-meetings.sh oauth-login --full
 ```
 
-命令会自动打开浏览器。登录录音设备绑定的飞书账号并同意授权即可。
+命令会自动打开浏览器。登录录音设备绑定的飞书账号并同意授权。
 
-### 3. 检查是否成功
+### 检查授权状态
 
 Windows：
 
@@ -192,7 +164,7 @@ feishu-meeting-memory/
 └── config.json            # 本机敏感配置，不可分享或提交
 ```
 
-`config.json` 已在 `.gitignore` 中排除，但它会保存 App Secret、user access token 和 refresh token。分发时应使用未配置的仓库副本；每位使用者分别创建自己的 `config.json` 并完成 OAuth。
+`config.json` 已在 `.gitignore` 中排除，但它会保存 App Secret、user access token 和 refresh token。组织内分发时只允许发送尚未授权、不含个人 token 的初始配置；完成 OAuth 后的配置只能留在本人设备上。独立部署者应从干净的仓库副本创建自己的配置。
 
 配置文件其他字段通常不需要修改：
 
@@ -209,27 +181,21 @@ feishu-meeting-memory/
 
 完整授权包含 `offline_access`。保存 refresh token 后，程序会在 access token 临近过期时自动刷新；只有授权失效、用户更换账号或应用权限发生变化时才需要重新登录。
 
-## 验证完整流程
+## 验证
 
-Windows 示例：
+首次授权完成后，重新执行原会议提问就是最直接的验证：
+
+```text
+$feishu-meeting-memory 最近开了哪些会？
+```
+
+如果需要排查授权状态，再运行：
 
 ```powershell
-& .\scripts\feishu-meetings.ps1 permissions
 & .\scripts\feishu-meetings.ps1 doctor
-& .\scripts\feishu-meetings.ps1 meetings --days 30 --limit 10
-& .\scripts\feishu-meetings.ps1 doctor --probe
 ```
 
-如有无敏感内容的测试妙记和智能纪要，可进一步验证详情、AI 产物、逐字稿和文档正文：
-
-```powershell
-& .\scripts\feishu-meetings.ps1 doctor --probe `
-  --minute '<妙记 URL 或 minute_token>' `
-  --transcript `
-  --doc '<智能纪要 URL>'
-```
-
-验收标准是 `doctor` 显示个人授权、refresh token 和部署权限完整，且六项在线探测均为成功。
+看到顶层 `"ok": true` 即表示本机配置与授权正常。接口逐项探测和测试资源验收只用于管理员部署或故障排查，见[管理员一次性配置](references/deployment-permissions.md)。
 
 ## 在 Codex 中使用
 
